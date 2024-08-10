@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
-import { getAnalytics } from "firebase/analytics";
+import { getStorage } from 'firebase/storage';
 
 require('dotenv').config();
 
@@ -18,7 +18,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const firestore = getFirestore(app);
 // const analytics = getAnalytics(app);
+const storage = getStorage(app);
 
-export {firestore}
+export {firestore, app, storage}
 
 export default app

@@ -28,6 +28,8 @@ yarn-error.log*
 # local env files
 .env*.local
 
+#  gsutil cors set E:\MyShelf\cors.json gs://headshelfaware.appspot.com
+cors.json
 .env
 # vercel
 .vercel
@@ -35,3 +37,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+stellar-market-432102-f0-458f9e20a3b0.json

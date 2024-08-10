@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import {firestore} from '../firebase' 
+import { useState, useEffect, useRef } from 'react'
+import {firestore, app, storage} from '../firebase' 
 import {
   collection,
   getFirestore,
@@ -12,13 +12,16 @@ import {
   deleteDoc,
   getDoc,
 } from 'firebase/firestore'
+
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { pink } from '@mui/material/colors';
 import { Box, Stack, Typography, Button, TextField, Container, Paper } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+// import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import {Camera} from "react-camera-pro";
 
 // Add Inter font from Google Fonts
 const interFontLink = (
@@ -27,6 +30,9 @@ const interFontLink = (
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
   />
 );
+
+// const storage = getStorage();
+
 
 // Create a custom dark theme
 const theme = createTheme({
@@ -59,10 +65,11 @@ const style = {
   marginTop: '16px',
 };
 
-export default function Home() {
+  const HomePage = () => {
+
   const [inventory, setInventory] = useState([]);
   const [itemName, setItemName] = useState('');
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState();
   const [expirationDate, setExpirationDate] = useState('');
   const [notes, setNotes] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,9 +120,24 @@ export default function Home() {
     await updateInventory();
   };
 
-  const openCamera = async () => {
-    console.log("Camera loading...")
+  const [showCamera, setShowCamera] = useState(false);
+  const [image, setImage] = useState(null);
+  const camera = useRef(null);
+
+
+  const openCamera = () => {
+    setShowCamera(true);
   };
+
+  const closeCamera = () => {
+    setShowCamera(false);
+  };
+  // const openCamera = async () => {
+  //   const camera = useRef(null);
+  //   const [image, setImage] = useState(null);
+  //   console.log("Camera loading...")
+  //   setImage(camera.current.takePhoto())
+  //   };
 
   const handleSearch = (e) => {
     console.log("search query");
@@ -132,16 +154,80 @@ export default function Home() {
 
   };
 
+  const recognizeImage = async (imageData) => {
+    try {
+
+      const response = await fetch('/api/recognize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: imageData }),
+      });
+      // console.log("client recognize");
+  
+      if (!response.ok) {
+        throw new Error('Image recognition failed');
+      }
+  
+      const data = await response.json();
+      // console.log(data)
+      if (data.labels && data.labels.length > 0) {
+        setItemName(data.labels[0]);
+      }
+    } catch (error) {
+      console.error('Error recognizing image:', error);
+    }
+  };
+
+
+  const handleTakePhoto = async () => {
+    const imageData = camera.current.takePhoto();
+    setImage(imageData);
+    closeCamera();
+    // console.log('%c ', `font-size: 100px; background: url(${imageData}) no-repeat; background-size: contain;`);
+
+    await recognizeImage(imageData);
+
+    console.log('Image processed successfully');
+
+    setImage();
+
+    // const imageURL = await uploadImage(imageData);
+    // Use the image URL for recognition
+    // await recognizeImage(imageURL);
+
+  }
+
+  
   return (
     <ThemeProvider theme={theme}>
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         {interFontLink}
         {/* <Paper elevation={3} sx={{ p: 4 }}> */}
-          <Typography variant="h4" align="center" gutterBottom>
-            Stay Shelf-Aware
+        <Box textAlign="center" mb={5}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Your <Box 
+              component="span" 
+              sx={{ 
+                color: '#87CEFA',
+                fontWeight: 'bold',
+                // textDecoration: 'underline',
+                // textUnderlineOffset: '3px'
+              }}
+            >
+              shelf
+            </Box>, yourself, made simple.
           </Typography>
+          <Typography variant="h5" color="text.secondary">
+            {/* made simple. */}
+          </Typography>
+        </Box>
+          {/* <Typography variant="h5" align="center" gutterBottom>
+            Your <span style={{ color: '#87CEFA' }}>shelf</span>, yourself, made simple!
+          </Typography> */}
           {/* <Stack spacing={2} sx={{ mb: 2 }}> */}
-          <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mb: 2, marginTop:6, alignItems: 'center' }}>
+          <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mb: 2, mt:10, alignItems: 'center' }}>
 
           {/* <Stack direction="row" spacing={2} sx={{ mb: 6, marginTop:6, alignItems: 'center' }}> */}
 
@@ -152,6 +238,10 @@ export default function Home() {
               fullWidth
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
+              inputProps={{
+                autoCapitalize: 'words',
+                autoCorrect: 'on'
+              }}
             />
             <TextField
               id="quantity-input"
@@ -161,6 +251,18 @@ export default function Home() {
               fullWidth
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
+              inputProps={{
+                style: { 
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'textfield'
+                }
+              }}
+              sx={{
+                '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                  WebkitAppearance: 'none',
+                  margin: 0,
+                },
+              }}
             />
             <TextField
               id="expiration-date-input"
@@ -191,10 +293,36 @@ export default function Home() {
             >
               Add+
             </Button>
-            <CameraAltIcon fontSize= "large" onClick={() => openCamera()} sx={{ color: "primary" }} />
+            {/* <CameraAltIcon fontSize= "large" onClick={() => openCamera()} sx={{ color: "primary" }} /> */}
+            <CameraAltIcon fontSize="large" onClick={openCamera} sx={{ color: "primary" }} />
+      </Stack>
 
-          </Stack>
+      {showCamera && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
+          <Camera ref={camera} aspectRatio={16 / 9} />
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleTakePhoto}
 
+            // onClick={() => {
+            //   setImage(camera.current.takePhoto());
+            //   closeCamera();
+            // }}
+            sx={{ mt: 2, mb:2 }}
+          >
+            Take Photo
+          </Button>
+        </Box>
+      )}
+
+      {image && (
+        <Box sx={{ mt: 2, mb:2, textAlign: 'center' }}>
+          <Typography variant="h6">Taken Photo:</Typography>
+          <img src={image} alt="Taken photo" style={{ maxWidth: '100%', height: 'auto' }} />
+        </Box>
+      )}
+    {/* </div> */}
           <TextField
             id="search-input"
             label="Search in your Shelf"
@@ -248,163 +376,4 @@ export default function Home() {
   );
 }
 
-// const style = {
-//   position: 'absolute',
-//   top: '50%',
-//   left: '50%',
-//   transform: 'translate(-50%, -50%)',
-//   width: 400,
-//   bgcolor: 'white',
-//   border: '2px solid #000',
-//   boxShadow: 24,
-//   p: 4,
-//   display: 'flex',
-//   flexDirection: 'column',
-//   gap: 3,
-// }
-
-// export default function Home() {
-//   const [inventory, setInventory] = useState([]);
-//   const [open, setOpen] = useState(false);
-//   const [itemName, setItemName] = useState('');
-
-//   const updateInventory = async () => {
-//     const snapshot = await getDocs(query(collection(firestore, 'inventory')));
-//     const inventoryList = snapshot.docs.map(doc => ({ 
-//       name: doc.id, 
-//       ...doc.data() 
-//     }));
-//     setInventory(inventoryList);
-//   };
-
-//   useEffect(() => {
-//     updateInventory();
-//   }, []);
-
-//   const addItem = async (item) => {
-//     try {
-//       const docRef = doc(collection(firestore, 'inventory'), item);
-//       const docSnap = await getDoc(docRef);
-//       if (docSnap.exists()) {
-//         const { quantity } = docSnap.data();
-//         await setDoc(docRef, { quantity: quantity + 1 });
-//       } else {
-//         await setDoc(docRef, { quantity: 1 });
-//       }
-//       await updateInventory();
-//     } catch (error) {
-//       console.error("Error adding item: ", error);
-//       console.error("Error details:", error.code, error.message);
-//       // You could also show this error to the user
-//       alert(`Failed to add item: ${error.message}`);
-//     }
-//   };
-
-//   const removeItem = async (item) => {
-//     try {
-//       const docRef = doc(collection(firestore, 'inventory'), item);
-//       const docSnap = await getDoc(docRef);
-//       if (docSnap.exists()) {
-//         const { quantity } = docSnap.data();
-//         if (quantity === 1) {
-//           await deleteDoc(docRef);
-//         } else {
-//           await setDoc(docRef, { quantity: quantity - 1 });
-//         }
-//       }
-//       await updateInventory();
-//     } catch (error) {
-//       console.error("Error removing item: ", error);
-//     }
-//   };
-
-//   const handleOpen = () => setOpen(true);
-//   const handleClose = () => setOpen(false);
-
-
-//   return (
-//     <Box
-//       width="100vw"
-//       height="100vh"
-//       display={'flex'}
-//       justifyContent={'center'}
-//       flexDirection={'column'}
-//       alignItems={'center'}
-//       gap={2}
-//     >
-//       <Modal
-//         open={open}
-//         onClose={handleClose}
-//         aria-labelledby="modal-modal-title"
-//         aria-describedby="modal-modal-description"
-//       >
-//         <Box sx={style}>
-//           <Typography id="modal-modal-title" variant="h6" component="h2">
-//             Add Item
-//           </Typography>
-//           <Stack width="100%" direction={'row'} spacing={2}>
-//             <TextField
-//               id="outlined-basic"
-//               label="Item"
-//               variant="outlined"
-//               fullWidth
-//               value={itemName}
-//               onChange={(e) => setItemName(e.target.value)}
-//             />
-//             <Button
-//               variant="outlined"
-//               onClick={() => {
-//                 addItem(itemName)
-//                 setItemName('')
-//                 handleClose()
-//               }}
-//             >
-//               Add
-//             </Button>
-//           </Stack>
-//         </Box>
-//       </Modal>
-//       <Button variant="contained" onClick={handleOpen}>
-//         Add New Item
-//       </Button>
-//       <Box border={'1px solid #333'}>
-//         <Box
-//           width="800px"
-//           height="100px"
-//           bgcolor={'#ADD8E6'}
-//           display={'flex'}
-//           justifyContent={'center'}
-//           alignItems={'center'}
-//         >
-//           <Typography variant={'h2'} color={'#333'} textAlign={'center'}>
-//             Inventory Items
-//           </Typography>
-//         </Box>
-//         <Stack width="800px" height="300px" spacing={2} overflow={'auto'}>
-//           {inventory.map(({name, quantity}) => (
-//             <Box
-//               key={name}
-//               width="100%"
-//               minHeight="150px"
-//               display={'flex'}
-//               justifyContent={'space-between'}
-//               alignItems={'center'}
-//               bgcolor={'#f0f0f0'}
-//               paddingX={5}
-//             >
-//               <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-//                 {name.charAt(0).toUpperCase() + name.slice(1)}
-//               </Typography>
-//               <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-//                 Quantity: {quantity}
-//               </Typography>
-//               <Button variant="contained" onClick={() => removeItem(name)}>
-//                 Remove
-//               </Button>
-//             </Box>
-//           ))}
-//         </Stack>
-//       </Box>
-//     </Box>
-//   )
-// }
+export default HomePage;
