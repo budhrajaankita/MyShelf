@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import {firestore, app, storage} from '../firebase' 
+import {firestore, app, storage} from '../firebase'
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+
 import {
   collection,
   getFirestore,
@@ -21,9 +25,9 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 // import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import RecipeSuggestions from './recipeSuggestions';
 import {Camera} from "react-camera-pro";
 
-// Add Inter font from Google Fonts
 const interFontLink = (
   <link
     rel="stylesheet"
@@ -31,10 +35,6 @@ const interFontLink = (
   />
 );
 
-// const storage = getStorage();
-
-
-// Create a custom dark theme
 const theme = createTheme({
   typography: {
     fontFamily: 'Inter, sans-serif',
@@ -65,7 +65,15 @@ const style = {
   marginTop: '16px',
 };
 
-  const HomePage = () => {
+
+const App = () => {
+
+  const router = useRouter();
+
+
+    const goToRecipeSuggestions = () => {
+      navigate('/recipeSuggestions');
+    };
 
   const [inventory, setInventory] = useState([]);
   const [itemName, setItemName] = useState('');
@@ -123,6 +131,7 @@ const style = {
   const [showCamera, setShowCamera] = useState(false);
   const [image, setImage] = useState(null);
   const camera = useRef(null);
+  const [facingMode, setFacingMode] = useState('environment');
 
 
   const openCamera = () => {
@@ -193,12 +202,16 @@ const style = {
     console.log('Image processed successfully');
 
     setImage();
-
-    // const imageURL = await uploadImage(imageData);
-    // Use the image URL for recognition
-    // await recognizeImage(imageURL);
-
   }
+
+  const handleRecipes = () => {
+    router.push({
+      pathname: '/recipeSuggestions',
+      query: { inventory: JSON.stringify(inventory) },
+    });
+  };
+
+  console.log(inventory);
 
   
   return (
@@ -287,20 +300,25 @@ const style = {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Button
               variant="contained"
               color="primary"
               onClick={addItem}
+              sx={{ mr: 2 }}
             >
               Add+
             </Button>
-            {/* <CameraAltIcon fontSize= "large" onClick={() => openCamera()} sx={{ color: "primary" }} /> */}
             <CameraAltIcon fontSize="large" onClick={openCamera} sx={{ color: "primary" }} />
+            </Box>
       </Stack>
 
       {showCamera && (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
-          <Camera ref={camera} aspectRatio={16 / 9} />
+          <Camera ref={camera} facingMode={facingMode} aspectRatio={16 / 9} onError={(error) => {
+          if (error === 'noCameraAccessible' && facingMode === 'environment') {
+            setFacingMode('user'); }}// Fallback to front camera
+          }/>
           <Button
             variant="contained"
             color="secondary"
@@ -331,8 +349,22 @@ const style = {
             fullWidth
             value={searchTerm}
             onChange={handleSearch}
-            sx={{ mb: 2 }}
+            // sx={{ mb: 2 }}
           />
+
+          {/* <Link href={`/recipeSuggestions?inventoryItems=${inventory}`} passHref> */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4, mt:4 }}>
+
+            <Button variant="contained" color="primary" onClick={handleRecipes}>
+              View Recipe Suggestions
+            </Button>
+            </Box>
+          {/* </Link> */}
+           {/* <Button variant="contained" color="primary" onClick={goToRecipeSuggestions}> */}
+        {/* View Recipe Suggestions */}
+      {/* </Button> */}
+          {/* <RecipeSuggestions inventoryItems={inventory} /> */}
+
 
           <Box sx={style}>
             <Typography variant="h5" color="text.primary" textAlign="center" gutterBottom>
@@ -377,4 +409,4 @@ const style = {
   );
 }
 
-export default HomePage;
+export default App;
