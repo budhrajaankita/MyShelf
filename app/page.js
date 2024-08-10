@@ -186,6 +186,7 @@ const style = {
     setImage(imageData);
     closeCamera();
     // console.log('%c ', `font-size: 100px; background: url(${imageData}) no-repeat; background-size: contain;`);
+    console.log("clicked pic")
 
     await recognizeImage(imageData);
 
