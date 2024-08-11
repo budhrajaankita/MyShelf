@@ -96,7 +96,8 @@ const LandingPage = () => {
         <Card sx={{ bgcolor: 'background.paper', p: 3, mb: 4, width: '100%' }}>
           <CardContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
-            Effortlessly keep track of your inventory and receive personalized recipe suggestions. Join the movement to reduce food waste by making the most of your groceries before they expire. With MyShelf, you'll never run out of essentials again!            </Typography>
+            Effortlessly keep track of your inventory and receive personalized recipe suggestions. Join the movement to reduce food waste by making the most of your groceries before they expire. With MyShelf, you will never run out of essentials again!
+            </Typography>
             <Link href="/app" passHref>
               <Button variant="contained" color="primary" sx={{ mt: 2 }}>
                 Get Started
