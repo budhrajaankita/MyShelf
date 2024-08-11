@@ -6,8 +6,8 @@ import { Button, Box, Typography, Container, Card, CardContent } from '@mui/mate
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import '../styles/globals.css';
 
-import * as THREE from "three";
-import NET from "vanta/dist/vanta.net.min.js";
+// import * as THREE from "three";
+// import BIRDS from "vanta/dist/vanta.birds.min.js";
 
 const interFontLink = (
   <link
@@ -41,40 +41,51 @@ const theme = createTheme({
 
 const LandingPage = () => {
 
-  const [vantaEffect, setVantaEffect] = useState(0);
-  const vantaRef = useRef(null);
+  // const [vantaEffect, setVantaEffect] = useState(0);
+  // const vantaRef = useRef(null);
 
-  useEffect(() => {
-    if (!vantaEffect) {
-      setVantaEffect(
-        NET({
-          el: vantaRef.current,
-          THREE: THREE,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          points: 12.00,
-          maxDistance: 18.00,
-          showDots: false,
-          color: 0xbbcad0,
-  backgroundColor: 0x0,
-        })
-      );
-    } 
+  // useEffect(() => {
+  //   if (!vantaEffect) {
+  //     setVantaEffect(
+  //       BIRDS({
+  //         el: vantaRef.current,
+  //         THREE: THREE,
+  //         mouseControls: true,
+  //         touchControls: true,
+  //         gyroControls: false,
+  //         minHeight: 200.00,
+  //         minWidth: 200.00,
+  //         scale: 1.00,
+  //         scaleMobile: 1.00,
+  //         color1: 0xe0e1e5,
+  //         birdSize: 0.90
+  // //         mouseControls: true,
+  // //         touchControls: true,
+  // //         gyroControls: false,
+  // //         minHeight: 200.00,
+  // //         minWidth: 200.00,
+  // //         scale: 1.00,
+  // //         scaleMobile: 1.00,
+  // //         points: 12.00,
+  // //         maxDistance: 18.00,
+  // //         showDots: false,
+  // //         color: 0xbbcad0,
+  // // backgroundColor: 0x0,
+  //       })
+  //     );
+  //   } 
+  
     
-    return () => {
-      if (vantaEffect) vantaEffect.destroy();
-    };
-  }, [vantaEffect]);
+  //   return () => {
+  //     if (vantaEffect) vantaEffect.destroy();
+  //   };
+  // }, [vantaEffect]);
 
   return (
     <ThemeProvider theme={theme}>
       {interFontLink}
-      <Box ref={vantaRef} sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+      {/* ref={vantaRef} */}
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <Container maxWidth="md" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
         <Typography variant="h2" sx={{ color: 'primary.main', fontStyle: 'bold',mb: 4 }}>
           Welcome to MyShelf
