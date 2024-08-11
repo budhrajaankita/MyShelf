@@ -19,7 +19,7 @@ import {
 
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { pink } from '@mui/material/colors';
-import { Box, Stack, Typography, Button, TextField, Container, Paper } from '@mui/material';
+import { Box, Stack, Typography, Button, TextField, Container, Alert, List, ListItem, ListItemText } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
@@ -82,6 +82,11 @@ const App = () => {
   const [notes, setNotes] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredInventory, setFilteredInventory] = useState([]);
+  const [expiringItems, setExpiringItems] = useState([]);
+  const [expiredItems, setExpiredItems] = useState([]);
+  const [showExpiring, setShowExpiring] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
+
 
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -95,7 +100,43 @@ const App = () => {
     });
     setInventory(inventoryList);
     setFilteredInventory(inventoryList);
+    checkExpiringItems(inventoryList);
   };
+
+
+ 
+
+  const checkExpiringItems = (inventoryList) => {
+    const today = new Date();
+    const warningPeriod = 2; // Days before expiration to warn the user
+  
+    const expiring = inventoryList.filter(item => {
+      if (!item.expirationDate) {
+        return false;
+      }
+  
+      const expirationDate = new Date(item.expirationDate);
+      if (isNaN(expirationDate)) {
+        return false;
+      }
+
+      const timeDifference = expirationDate - today;
+      const daysToExpire = timeDifference / (1000 * 3600 * 24);
+      return daysToExpire <= warningPeriod && daysToExpire >= 0;
+    });
+
+    const expired = inventoryList.filter(item => {
+      if (!item.expirationDate) return false;
+      const expirationDate = new Date(item.expirationDate);
+      if (isNaN(expirationDate)) return false;
+      return expirationDate < today;
+    });
+  
+    setExpiringItems(expiring);
+    setExpiredItems(expired);
+    // console.log(expiring);
+  };
+  
 
   useEffect(() => {
     updateInventory();
@@ -181,8 +222,9 @@ const App = () => {
   
       const data = await response.json();
       // console.log(data)
-      if (data.labels && data.labels.length > 0) {
-        setItemName(data.labels[0]);
+      if (data.objects && data.objects.length > 0) {
+        console.log(data.objects[0])
+        setItemName(data.objects[0]);
       }
     } catch (error) {
       console.error('Error recognizing image:', error);
@@ -237,13 +279,55 @@ const App = () => {
             {/* made simple. */}
           </Typography>
         </Box>
-          {/* <Typography variant="h5" align="center" gutterBottom>
-            Your <span style={{ color: '#87CEFA' }}>shelf</span>, yourself, made simple!
-          </Typography> */}
-          {/* <Stack spacing={2} sx={{ mb: 2 }}> */}
-          <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mb: 2, mt:10, alignItems: 'center' }}>
+        
 
-          {/* <Stack direction="row" spacing={2} sx={{ mb: 6, marginTop:6, alignItems: 'center' }}> */}
+        <Box sx={{ padding: 2 }}>
+
+        {/* <Button variant="contained" color="primary" onClick={() => setShowExpiring(!showExpiring)} sx={{ mb: 2 }}>
+        {showExpiring ? 'Hide Expiring Items' : 'Show Expiring Items'}
+        </Button>
+        <Button variant="contained" color="secondary" onClick={() => setShowExpired(!showExpired)} sx={{ mb: 2, ml: 2 }}>
+        {showExpired ? 'Hide Expired Items' : 'Show Expired Items'}
+        </Button> */}
+      {expiringItems.length > 0 && (
+        <>
+          <Alert severity="warning">
+            You have items that are expiring soon!
+          </Alert>
+            <List>
+              {expiringItems.map(({ id, quantity, expirationDate }) => (
+                <ListItem key={id}>
+                  <ListItemText
+                    primary={`${id.charAt(0).toUpperCase() + id.slice(1)}`}
+                    secondary={`Quantity: ${quantity} | Expiration: ${expirationDate}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+        </>
+      )}
+
+        {expiredItems.length > 0 && (
+          <>
+          <Alert severity="error">
+            You have items that have expired!
+          </Alert>
+          <List>
+            {expiredItems.map(({ id, quantity, expirationDate }) => (
+              <ListItem key={id}>
+                <ListItemText
+                  primary={`${id.charAt(0).toUpperCase() + id.slice(1)}`}
+                  secondary={`Quantity: ${quantity} | Expiration: ${expirationDate}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+          </>
+        )}
+    </Box>
+
+          
+          <Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mb: 2, mt:10, alignItems: 'center' }}>
 
             <TextField
               id="item-input"
@@ -315,7 +399,7 @@ const App = () => {
 
       {showCamera && (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
-          <Camera ref={camera} facingMode={facingMode} aspectRatio={16 / 9} onError={(error) => {
+          <Camera ref={camera} facingMode={facingMode} aspectRatio={4 / 3} onError={(error) => {
           if (error === 'noCameraAccessible' && facingMode === 'environment') {
             setFacingMode('user'); }}// Fallback to front camera
           }/>
@@ -359,12 +443,7 @@ const App = () => {
               View Recipe Suggestions
             </Button>
             </Box>
-          {/* </Link> */}
-           {/* <Button variant="contained" color="primary" onClick={goToRecipeSuggestions}> */}
-        {/* View Recipe Suggestions */}
-      {/* </Button> */}
-          {/* <RecipeSuggestions inventoryItems={inventory} /> */}
-
+         
 
           <Box sx={style}>
             <Typography variant="h5" color="text.primary" textAlign="center" gutterBottom>
@@ -395,15 +474,10 @@ const App = () => {
                     </Typography>
                   </Box>
                   <DeleteOutlined fontSize='medium' onClick={() => removeItem(id)} sx={{ color: pink[500] }} />
-
-                  {/* <Button variant="contained" color="secondary" onClick={() => removeItem(id)}> */}
-                    {/* Remove */}
-                  {/* </Button> */}
                 </Box>
               ))}
             </Stack>
           </Box>
-        {/* </Paper> */}
       </Container>
     </ThemeProvider>
   );
