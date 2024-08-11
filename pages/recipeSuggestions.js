@@ -18,7 +18,7 @@ const RecipeSuggestions = () => {
   const fetchRecipes = async () => {
     setLoading(true);
     const ingredients = inventoryItems.map(item => item.id).join(', ');
-    const prompt = `Given these ingredients: ${ingredients}, suggest 5 recipes I can make. Only list the recipe names and a brief desccription of how to make it. Exclue all special characters except :.`;
+    const prompt = `Given these ingredients: ${ingredients}, suggest 5-10 recipes I can make. Only list the recipe names and a desccription of how to make it. Exclue all special characters except :.`;
 
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
