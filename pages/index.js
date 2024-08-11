@@ -1,9 +1,13 @@
 // pages/index.js
 import React from 'react';
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link';
 import { Button, Box, Typography, Container, Card, CardContent } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import '../styles/globals.css';
+
+import * as THREE from "three";
+import NET from "vanta/dist/vanta.net.min.js";
 
 const interFontLink = (
   <link
@@ -36,11 +40,43 @@ const theme = createTheme({
 });
 
 const LandingPage = () => {
+
+  const [vantaEffect, setVantaEffect] = useState(0);
+  const vantaRef = useRef(null);
+
+  useEffect(() => {
+    if (!vantaEffect) {
+      setVantaEffect(
+        NET({
+          el: vantaRef.current,
+          THREE: THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          scale: 1.00,
+          scaleMobile: 1.00,
+          points: 12.00,
+          maxDistance: 18.00,
+          showDots: false,
+          color: 0xbbcad0,
+  backgroundColor: 0x0,
+        })
+      );
+    } 
+    
+    return () => {
+      if (vantaEffect) vantaEffect.destroy();
+    };
+  }, [vantaEffect]);
+
   return (
     <ThemeProvider theme={theme}>
       {interFontLink}
+      <Box ref={vantaRef} sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <Container maxWidth="md" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-        <Typography variant="h2" sx={{ color: 'primary.main', mb: 4 }}>
+        <Typography variant="h2" sx={{ color: 'primary.main', fontStyle: 'bold',mb: 4 }}>
           Welcome to MyShelf
         </Typography>
         <Typography variant="h5" sx={{ color: 'text.secondary', mb: 4 }}>
@@ -49,7 +85,7 @@ const LandingPage = () => {
         <Card sx={{ bgcolor: 'background.paper', p: 3, mb: 4, width: '100%' }}>
           <CardContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
-              Manage your inventory effortlessly. Keep track of your items, scan images, get recipes, and never run out of essentials again.
+              Keep track of your inventory. Identify items using your camera. Get recipes. Never run out of essentials again.
             </Typography>
             <Link href="/app" passHref>
               <Button variant="contained" color="primary" sx={{ mt: 2 }}>
@@ -58,12 +94,13 @@ const LandingPage = () => {
             </Link>
           </CardContent>
         </Card>
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 20 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             © 2024 MyShelf. All rights reserved.
           </Typography>
         </Box>
       </Container>
+      </Box>
     </ThemeProvider>
   );
 };
