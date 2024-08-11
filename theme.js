@@ -2,7 +2,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 // Add Inter font from Google Fonts
-  
+
 
   const theme = createTheme({
     typography: {
